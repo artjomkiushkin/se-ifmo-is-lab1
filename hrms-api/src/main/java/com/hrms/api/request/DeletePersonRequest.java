@@ -1,0 +1,25 @@
+package com.hrms.api.request;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class DeletePersonRequest {
+    private List<WorkerReplacement> replacements;
+    
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WorkerReplacement {
+        private Long workerId;
+        private Long newPersonId;
+    }
+}
+

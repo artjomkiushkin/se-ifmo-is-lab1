@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HRMS - Адреса</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+</head>
+<body>
+    <div id="navbar-container"></div>
+
+    <div class="container-fluid px-4 mt-4">
+        <h2>Управление адресами</h2>
+        
+        <div class="mb-3">
+            <button class="btn btn-primary" onclick="openCreateModal()"><i class="bi bi-plus-lg"></i> Создать</button>
+        </div>
+        
+        <div id="tableContainer"></div>
+        
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div>
+                <label for="pageSizeInput" class="me-2">Элементов на странице:</label>
+                <input type="number" id="pageSizeInput" class="form-control d-inline-block" style="width: 100px;" min="1" max="1000" value="10" onkeypress="if(event.key === 'Enter') applyPageSize()">
+                <button class="btn btn-sm btn-primary" onclick="applyPageSize()" title="Применить"><i class="bi bi-check-lg"></i></button>
+            </div>
+            <nav>
+                <ul class="pagination mb-0" id="addressesPagination"></ul>
+            </nav>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addressModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addressModalLabel">Создать адрес</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addressForm">
+                        <input type="hidden" id="addressId">
+                        <div class="mb-3">
+                            <label for="addressZipCode" class="form-label">Почтовый индекс *</label>
+                            <input type="text" class="form-control" id="addressZipCode" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="saveAddress()">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="viewModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewModalTitle">Просмотр</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="viewModalBody"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="viewModalEditBtn"><i class="bi bi-pencil me-1"></i>Изменить</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Подтверждение удаления</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="deleteMessage">Вы уверены, что хотите удалить этот адрес?</p>
+                    <div id="replacementSection" style="display: none;">
+                        <div id="organizationsReplacementList" style="padding-bottom: 150px;"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmDelete()">Удалить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+    <script src="lib/utils.js"></script>
+    <script src="lib/components.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script src="lib/enums.js"></script>
+    <script src="lib/notifications.js"></script>
+    <script src="js/websocket.js"></script>
+    <script src="js/addresses.js"></script>
+    <script>NavbarBuilder.render('navbar-container');</script>
+</body>
+</html>

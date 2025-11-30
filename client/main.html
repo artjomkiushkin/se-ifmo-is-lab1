@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HRMS - Управление работниками</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+</head>
+<body>
+    <div id="navbar-container"></div>
+
+    <div class="container-fluid px-4 mt-4">
+        <h2>Управление работниками</h2>
+        
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <button class="btn btn-primary" onclick="openCreateWorkerModal()"><i class="bi bi-plus-lg"></i> Создать</button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-info" onclick="showUniqueStartDates()"><i class="bi bi-calendar-check"></i> Уникальные даты</button>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-danger" onclick="showDeleteByEndDateModal()"><i class="bi bi-calendar-x"></i> Удалить по дате</button>
+            </div>
+            <div class="col-md-3">
+                <input type="text" class="form-control" id="searchInput" placeholder="Фильтр по имени..." onkeyup="handleSearch(this.value)">
+            </div>
+        </div>
+        
+        <div id="tableContainer"></div>
+        
+        <div class="pagination-controls">
+            <label>
+                Элементов на странице:
+                <input type="number" class="form-control form-control-sm" id="pageSizeInput" value="10" min="1" max="1000" onkeypress="if(event.key==='Enter') applyPageSize()" style="width: 80px; display: inline-block;">
+            </label>
+            <button class="btn btn-sm btn-secondary" onclick="applyPageSize()" title="Применить"><i class="bi bi-check-lg"></i></button>
+        </div>
+        
+        <nav>
+            <ul class="pagination justify-content-center" id="pagination">
+            </ul>
+        </nav>
+    </div>
+
+    <div class="modal fade" id="workerModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="workerModalTitle">Создать работника</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="workerForm">
+                        <input type="hidden" id="workerId">
+                        
+                        <h6>Основная информация</h6>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="position" class="form-label">Должность *</label>
+                                <select class="form-select" id="position" required>
+                                    <option value="">Выберите должность</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="salary" class="form-label">Зарплата *</label>
+                                <input type="number" step="any" class="form-control" id="salary" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="rating" class="form-label">Рейтинг *</label>
+                                <input type="number" step="any" class="form-control" id="rating" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="startDate" class="form-label">Дата начала работы *</label>
+                                <input type="date" class="form-control" id="startDate" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <label for="endDate" class="form-label">Дата окончания работы</label>
+                                <input type="datetime-local" class="form-control" id="endDate">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="endDateTz" class="form-label">Часовой пояс</label>
+                                <select class="form-select" id="endDateTz"></select>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        <h6>Координаты *</h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="coordX" class="form-label">X *</label>
+                                <input type="number" step="any" class="form-control" id="coordX" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="coordY" class="form-label">Y *</label>
+                                <input type="number" step="any" class="form-control" id="coordY" required>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        <h6>Организация *</h6>
+                        <div class="mb-3">
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="orgType" id="orgTypeExisting" value="existing" checked onchange="toggleOrgType()">
+                                <label class="btn btn-outline-primary" for="orgTypeExisting">Выбрать</label>
+                                <input type="radio" class="btn-check" name="orgType" id="orgTypeNew" value="new" onchange="toggleOrgType()">
+                                <label class="btn btn-outline-success" for="orgTypeNew">Создать</label>
+                            </div>
+                        </div>
+                        <div id="orgExistingBlock" class="mb-3">
+                            <select id="organizationSelect"></select>
+                        </div>
+                        <div id="orgNewBlock" style="display:none;">
+                            <div class="mb-2"><input type="text" class="form-control" id="newOrgName" placeholder="Название *"></div>
+                            <div class="row mb-2">
+                                <div class="col-6"><input type="number" step="any" class="form-control" id="newOrgTurnover" placeholder="Оборот *"></div>
+                                <div class="col-6"><input type="number" step="any" class="form-control" id="newOrgRating" placeholder="Рейтинг *"></div>
+                            </div>
+                            <div class="card card-body bg-light mb-2">
+                                <small class="text-muted mb-1">Адрес организации</small>
+                                <div class="btn-group w-100 btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="newOrgAddrType" id="newOrgAddrNone" value="none" checked onchange="toggleNewOrgAddrType()">
+                                    <label class="btn btn-outline-secondary" for="newOrgAddrNone">Без адреса</label>
+                                    <input type="radio" class="btn-check" name="newOrgAddrType" id="newOrgAddrExisting" value="existing" onchange="toggleNewOrgAddrType()">
+                                    <label class="btn btn-outline-primary" for="newOrgAddrExisting">Выбрать</label>
+                                    <input type="radio" class="btn-check" name="newOrgAddrType" id="newOrgAddrNew" value="new" onchange="toggleNewOrgAddrType()">
+                                    <label class="btn btn-outline-success" for="newOrgAddrNew">Создать</label>
+                                </div>
+                                <div id="newOrgAddrExistingBlock" style="display:none;" class="mt-2">
+                                    <select id="newOrgAddrSelect"></select>
+                                </div>
+                                <div id="newOrgAddrNewBlock" style="display:none;" class="mt-2">
+                                    <input type="text" class="form-control form-control-sm" id="newOrgAddrZip" placeholder="Почтовый индекс *">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        <h6>Персона *</h6>
+                        <div class="mb-3">
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="personType" id="personTypeExisting" value="existing" checked onchange="togglePersonType()">
+                                <label class="btn btn-outline-primary" for="personTypeExisting">Выбрать</label>
+                                <input type="radio" class="btn-check" name="personType" id="personTypeEdit" value="edit" onchange="togglePersonType()">
+                                <label class="btn btn-outline-warning" for="personTypeEdit">Изменить</label>
+                                <input type="radio" class="btn-check" name="personType" id="personTypeNew" value="new" onchange="togglePersonType()">
+                                <label class="btn btn-outline-success" for="personTypeNew">Создать</label>
+                            </div>
+                        </div>
+                        <div id="personExistingBlock" class="mb-3">
+                            <select id="personSelect"></select>
+                        </div>
+                        <div id="personEditBlock" style="display:none;">
+                            <input type="hidden" id="editPersonId">
+                            <div class="mb-2"><input type="text" class="form-control" id="editPersonName" placeholder="Имя *"></div>
+                            <div class="row mb-2">
+                                <div class="col-4"><select class="form-select form-select-sm" id="editPersonEyeColor"><option value="">Глаза *</option></select></div>
+                                <div class="col-4"><select class="form-select form-select-sm" id="editPersonHairColor"><option value="">Волосы *</option></select></div>
+                                <div class="col-4"><input type="number" class="form-control" id="editPersonHeight" placeholder="Рост *" min="1"></div>
+                            </div>
+                            <div class="card card-body bg-light mb-2">
+                                <small class="text-muted mb-1">Локация персоны</small>
+                                <input type="hidden" id="editPersonLocId">
+                                <div class="row mb-1">
+                                    <div class="col-4"><input type="number" class="form-control form-control-sm" id="editPersonLocX" placeholder="X"></div>
+                                    <div class="col-4"><input type="number" step="any" class="form-control form-control-sm" id="editPersonLocY" placeholder="Y"></div>
+                                    <div class="col-4"><input type="number" class="form-control form-control-sm" id="editPersonLocZ" placeholder="Z *"></div>
+                                </div>
+                                <input type="text" class="form-control form-control-sm" id="editPersonLocName" placeholder="Название">
+                            </div>
+                        </div>
+                        <div id="personNewBlock" style="display:none;">
+                            <div class="mb-2"><input type="text" class="form-control" id="newPersonName" placeholder="Имя *"></div>
+                            <div class="row mb-2">
+                                <div class="col-4"><select class="form-select form-select-sm" id="newPersonEyeColor"><option value="">Глаза *</option></select></div>
+                                <div class="col-4"><select class="form-select form-select-sm" id="newPersonHairColor"><option value="">Волосы *</option></select></div>
+                                <div class="col-4"><input type="number" class="form-control" id="newPersonHeight" placeholder="Рост *" min="1"></div>
+                            </div>
+                            <div class="card card-body bg-light mb-2">
+                                <small class="text-muted mb-1">Локация персоны</small>
+                                <div class="btn-group w-100 btn-group-sm" role="group">
+                                    <input type="radio" class="btn-check" name="newPersonLocType" id="newPersonLocNone" value="none" checked onchange="toggleNewPersonLocType()">
+                                    <label class="btn btn-outline-secondary" for="newPersonLocNone">Без локации</label>
+                                    <input type="radio" class="btn-check" name="newPersonLocType" id="newPersonLocExisting" value="existing" onchange="toggleNewPersonLocType()">
+                                    <label class="btn btn-outline-primary" for="newPersonLocExisting">Выбрать</label>
+                                    <input type="radio" class="btn-check" name="newPersonLocType" id="newPersonLocNew" value="new" onchange="toggleNewPersonLocType()">
+                                    <label class="btn btn-outline-success" for="newPersonLocNew">Создать</label>
+                                </div>
+                                <div id="newPersonLocExistingBlock" style="display:none;" class="mt-2">
+                                    <select id="newPersonLocSelect"></select>
+                                </div>
+                                <div id="newPersonLocNewBlock" style="display:none;" class="mt-2">
+                                    <div class="row mb-1">
+                                        <div class="col-4"><input type="number" class="form-control form-control-sm" id="newPersonLocX" placeholder="X *"></div>
+                                        <div class="col-4"><input type="number" step="any" class="form-control form-control-sm" id="newPersonLocY" placeholder="Y *"></div>
+                                        <div class="col-4"><input type="number" class="form-control form-control-sm" id="newPersonLocZ" placeholder="Z *"></div>
+                                    </div>
+                                    <input type="text" class="form-control form-control-sm" id="newPersonLocName" placeholder="Название">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="saveWorker()">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="deleteByEndDateModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Удалить работника по дате окончания</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="deleteEndDate" class="form-label">Дата окончания работы</label>
+                            <input type="datetime-local" class="form-control" id="deleteEndDate">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="deleteEndDateTz" class="form-label">Часовой пояс</label>
+                            <select class="form-select" id="deleteEndDateTz"></select>
+                        </div>
+                    </div>
+                    <div id="deleteEndDateResult"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-danger" onclick="executeDeleteByEndDate()">Удалить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="uniqueDatesModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Уникальные даты начала работы</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <pre id="uniqueDatesResult" class="mb-0"></pre>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="viewModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewModalTitle">Просмотр</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="viewModalBody"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="viewModalEditBtn"><i class="bi bi-pencil me-1"></i>Изменить</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Подтверждение удаления</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="deleteMessage">Вы уверены, что хотите удалить этого работника?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmDelete()">Удалить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script src="lib/utils.js"></script>
+    <script src="lib/components.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script src="lib/enums.js"></script>
+    <script src="lib/notifications.js"></script>
+    <script src="js/websocket.js"></script>
+    <script src="js/workers.js"></script>
+    <script>
+        NavbarBuilder.render('navbar-container');
+        checkAuth();
+        initWorkers();
+    </script>
+</body>
+</html>
+

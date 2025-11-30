@@ -1,0 +1,220 @@
+body {
+    min-height: 100vh;
+}
+
+.table-responsive {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.pagination {
+    margin-top: 20px;
+}
+
+.modal-lg {
+    max-width: 800px;
+}
+
+.navbar-brand {
+    font-weight: bold;
+}
+
+.card {
+    border-radius: 10px;
+}
+
+.btn {
+    border-radius: 5px;
+}
+
+.alert {
+    border-radius: 5px;
+}
+
+table {
+    table-layout: auto;
+    width: max-content;
+    min-width: 100%;
+}
+
+table th {
+    position: sticky;
+    top: 0;
+    background-color: #212529;
+    z-index: 10;
+    font-size: 0.75rem;
+    padding: 0.4rem 0.6rem;
+    white-space: nowrap;
+}
+
+.group-header-row th {
+    top: 0;
+    z-index: 11;
+}
+
+.group-header-row + tr th {
+    top: 28px;
+}
+
+.group-header {
+    background-color: #343a40 !important;
+    border-bottom: 2px solid #495057;
+    font-weight: bold;
+}
+
+.group-toggle {
+    cursor: pointer;
+    user-select: none;
+}
+
+.group-toggle:hover {
+    background-color: #495057 !important;
+}
+
+table td {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.6rem;
+    white-space: nowrap;
+}
+
+table th.td-narrow,
+table td.td-narrow {
+    white-space: nowrap;
+    width: 1%;
+}
+
+table th.td-wrap,
+table td.td-wrap {
+    white-space: normal;
+    word-break: normal;
+    max-width: 200px;
+    min-width: 100px;
+}
+
+
+.action-buttons {
+    white-space: nowrap;
+    min-width: 150px;
+    visibility: visible !important;
+    display: table-cell !important;
+}
+
+.action-buttons button {
+    margin-right: 2px;
+    font-size: 0.7rem;
+    padding: 0.25rem 0.5rem;
+    display: inline-block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Icon buttons alignment */
+.btn i.bi {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    line-height: 1;
+}
+
+.compact-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+.compact-btn i.bi {
+    font-size: 14px;
+}
+
+thead .btn-sm {
+    width: 32px;
+    height: 32px;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+}
+
+thead .btn-sm i.bi {
+    font-size: 14px;
+}
+
+.table-responsive {
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: calc(100vh - 300px);
+    min-height: 300px;
+}
+
+.form-control-sm, .form-select-sm {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+}
+
+table .form-select-sm {
+    padding-right: 2rem;
+}
+
+.td-narrow .form-control-sm,
+.td-narrow .form-select-sm {
+    min-width: 50px;
+    width: 100%;
+}
+
+.td-wrap .form-control-sm {
+    min-width: 80px;
+    width: 100%;
+}
+
+#workersTable {
+    font-size: 0.75rem;
+}
+
+#workersTable th {
+    cursor: pointer;
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.pagination-controls label {
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+/* Toast customization */
+.toast {
+    min-width: 300px;
+    max-width: 400px;
+}
+
+.toast-header {
+    font-weight: 500;
+}
+
+.toast-body {
+    font-size: 14px;
+}
+
+.ts-dropdown {
+    z-index: 10000 !important;
+}
+
+.modal-body {
+    overflow: visible;
+}
+
+.modal-content {
+    overflow: visible;
+}
+

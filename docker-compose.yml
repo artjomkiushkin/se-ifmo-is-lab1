@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: hrms_postgres
+    environment:
+      POSTGRES_DB: studs
+      POSTGRES_USER: s335130
+      POSTGRES_PASSWORD: nUHt&7421
+    ports:
+      - "7000:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-schema.sql:/docker-entrypoint-initdb.d/init-schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U s335130 -d studs"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+
