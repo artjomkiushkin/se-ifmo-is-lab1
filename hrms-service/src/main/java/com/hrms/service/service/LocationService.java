@@ -4,6 +4,7 @@ import com.hrms.core.mapper.LocationMapper;
 import com.hrms.core.model.dto.FilterDTO;
 import com.hrms.core.model.dto.LocationDTO;
 import com.hrms.core.model.entity.Location;
+import com.hrms.core.model.entity.Person;
 import com.hrms.service.repository.LocationRepository;
 import com.hrms.service.repository.PersonRepository;
 import com.hrms.service.specification.LocationSpecification;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -74,7 +76,7 @@ public class LocationService {
         List<Long> updatedPersonIds = List.of();
         if (MapUtils.isNotEmpty(personToLocationMap)) {
             var persons = personRepository.findAllById(personToLocationMap.keySet());
-            var locationIds = StreamEx.of(personToLocationMap.values()).filter(lid -> lid != null).toList();
+            var locationIds = StreamEx.of(personToLocationMap.values()).filter(Objects::nonNull).toList();
             var locations = StreamEx.of(locationRepository.findAllById(locationIds)).toMap(Location::getId, l -> l);
             var updated = StreamEx.of(persons)
                 .map(p -> {
@@ -86,7 +88,7 @@ public class LocationService {
                 })
                 .toList();
             personRepository.saveAll(updated);
-            updatedPersonIds = StreamEx.of(updated).map(p -> p.getId()).toList();
+            updatedPersonIds = StreamEx.of(updated).map(Person::getId).toList();
         }
         locationRepository.delete(toDelete);
         return updatedPersonIds;

@@ -6,6 +6,7 @@ import com.hrms.core.model.dto.FilterDTO;
 import com.hrms.core.model.dto.PersonDTO;
 import com.hrms.core.model.entity.Location;
 import com.hrms.core.model.entity.Person;
+import com.hrms.core.model.entity.Worker;
 import com.hrms.service.repository.LocationRepository;
 import com.hrms.service.repository.PersonRepository;
 import com.hrms.service.repository.WorkerRepository;
@@ -145,7 +146,7 @@ public class PersonService {
                 })
                 .toList();
             workerRepository.saveAll(updated);
-            updatedWorkerIds = StreamEx.of(updated).map(w -> w.getId()).toList();
+            updatedWorkerIds = StreamEx.of(updated).map(Worker::getId).toList();
         }
         personRepository.delete(toDelete);
         return updatedWorkerIds;

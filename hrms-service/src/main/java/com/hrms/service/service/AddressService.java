@@ -4,6 +4,7 @@ import com.hrms.core.mapper.AddressMapper;
 import com.hrms.core.model.dto.AddressDTO;
 import com.hrms.core.model.dto.FilterDTO;
 import com.hrms.core.model.entity.Address;
+import com.hrms.core.model.entity.Organization;
 import com.hrms.service.repository.AddressRepository;
 import com.hrms.service.repository.OrganizationRepository;
 import com.hrms.service.specification.AddressSpecification;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -68,7 +70,7 @@ public class AddressService {
         List<Long> updatedOrgIds = List.of();
         if (MapUtils.isNotEmpty(orgToAddressMap)) {
             var orgs = organizationRepository.findAllById(orgToAddressMap.keySet());
-            var addressIds = StreamEx.of(orgToAddressMap.values()).filter(aid -> aid != null).toList();
+            var addressIds = StreamEx.of(orgToAddressMap.values()).filter(Objects::nonNull).toList();
             var addresses = StreamEx.of(addressRepository.findAllById(addressIds)).toMap(Address::getId, a -> a);
             var updated = StreamEx.of(orgs)
                 .map(o -> {
@@ -80,7 +82,7 @@ public class AddressService {
                 })
                 .toList();
             organizationRepository.saveAll(updated);
-            updatedOrgIds = StreamEx.of(updated).map(o -> o.getId()).toList();
+            updatedOrgIds = StreamEx.of(updated).map(Organization::getId).toList();
         }
         addressRepository.delete(toDelete);
         return updatedOrgIds;

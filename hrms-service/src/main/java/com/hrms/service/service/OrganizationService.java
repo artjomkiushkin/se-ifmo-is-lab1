@@ -6,6 +6,7 @@ import com.hrms.core.model.dto.FilterDTO;
 import com.hrms.core.model.dto.OrganizationDTO;
 import com.hrms.core.model.entity.Address;
 import com.hrms.core.model.entity.Organization;
+import com.hrms.core.model.entity.Worker;
 import com.hrms.service.repository.AddressRepository;
 import com.hrms.service.repository.OrganizationRepository;
 import com.hrms.service.repository.WorkerRepository;
@@ -115,7 +116,7 @@ public class OrganizationService {
                 })
                 .toList();
             workerRepository.saveAll(updated);
-            updatedWorkerIds = StreamEx.of(updated).map(w -> w.getId()).toList();
+            updatedWorkerIds = StreamEx.of(updated).map(Worker::getId).toList();
         }
         organizationRepository.delete(toDelete);
         return updatedWorkerIds;
@@ -142,7 +143,7 @@ public class OrganizationService {
     public List<OrganizationDTO> batchUpdateAddress(List<Long> orgIds, List<Long> addressIds) {
         var orgs = organizationRepository.findAllById(orgIds);
         var addresses = StreamEx.of(addressRepository.findAllById(addressIds))
-            .toMap(a -> a.getId(), a -> a);
+            .toMap(Address::getId, a -> a);
         var updated = StreamEx.of(orgs)
             .mapToEntry(o -> orgIds.indexOf(o.getId()))
             .mapValues(idx -> idx >= 0 && idx < addressIds.size() ? addressIds.get(idx) : null)
