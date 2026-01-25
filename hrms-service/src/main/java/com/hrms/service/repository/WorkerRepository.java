@@ -7,6 +7,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -45,5 +46,12 @@ public interface WorkerRepository extends JpaRepository<Worker, Long>, JpaSpecif
     
     @Query("SELECT DISTINCT w.startDate FROM Worker w")
     List<Date> findDistinctStartDates();
+    
+    @Query("SELECT w FROM Worker w WHERE w.person.id = :personId AND (w.endDate IS NULL OR w.endDate > CURRENT_TIMESTAMP)")
+    List<Worker> findActiveByPersonId(@Param("personId") Long personId);
+    
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Worker w WHERE w.id = :id")
+    int deleteWorkerById(@Param("id") Long id);
 }
 

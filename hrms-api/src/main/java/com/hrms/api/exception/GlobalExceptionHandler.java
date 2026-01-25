@@ -1,9 +1,12 @@
 package com.hrms.api.exception;
 
+import com.hrms.service.exception.BusinessException;
+import com.hrms.service.exception.EntityNotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import one.util.streamex.StreamEx;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -14,6 +17,34 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleEntityNotFound(EntityNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<Map<String, String>> handleBusinessException(BusinessException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", ex.getMessage()));
+    }
+
+    @ExceptionHandler(CannotAcquireLockException.class)
+    public ResponseEntity<Map<String, String>> handleLockException(CannotAcquireLockException ex) {
+        var msg = ex.getMessage();
+        if (msg != null && msg.contains("не найден")) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", msg));
+        }
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Конфликт с другой операцией, попробуйте снова"));
+    }
+
+    @ExceptionHandler(org.hibernate.exception.LockAcquisitionException.class)
+    public ResponseEntity<Map<String, String>> handleHibernateLockException(org.hibernate.exception.LockAcquisitionException ex) {
+        var msg = ex.getMessage();
+        if (msg != null && msg.contains("не найден")) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", msg));
+        }
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Конфликт с другой операцией, попробуйте снова"));
+    }
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Map<String, String>> handleConstraintViolation(ConstraintViolationException ex) {
@@ -34,10 +65,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(jakarta.persistence.RollbackException.class)
     public ResponseEntity<Map<String, String>> handleRollbackException(jakarta.persistence.RollbackException ex) {
         var cause = ex.getCause();
-        if (cause instanceof ConstraintViolationException cve) {
-            return handleConstraintViolation(cve);
+        while (cause != null) {
+            if (cause instanceof ConstraintViolationException cve) {
+                return handleConstraintViolation(cve);
+            }
+            if (cause instanceof BusinessException be) {
+                return handleBusinessException(be);
+            }
+            if (cause instanceof EntityNotFoundException enfe) {
+                return handleEntityNotFound(enfe);
+            }
+            cause = cause.getCause();
         }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", extractMessage(ex)));
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Конфликт транзакции, попробуйте снова"));
     }
 
     @ExceptionHandler(org.springframework.transaction.TransactionSystemException.class)
@@ -46,7 +86,17 @@ public class GlobalExceptionHandler {
         if (root instanceof ConstraintViolationException cve) {
             return handleConstraintViolation(cve);
         }
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", extractMessage(ex)));
+        var cause = ex.getCause();
+        while (cause != null) {
+            if (cause instanceof BusinessException be) {
+                return handleBusinessException(be);
+            }
+            if (cause instanceof EntityNotFoundException enfe) {
+                return handleEntityNotFound(enfe);
+            }
+            cause = cause.getCause();
+        }
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Конфликт транзакции, попробуйте снова"));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
@@ -54,8 +104,33 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", ex.getMessage()));
     }
 
+    @ExceptionHandler(org.springframework.dao.DataAccessException.class)
+    public ResponseEntity<Map<String, String>> handleDataAccessException(org.springframework.dao.DataAccessException ex) {
+        var cause = ex.getCause();
+        while (cause != null) {
+            if (cause instanceof BusinessException be) {
+                return handleBusinessException(be);
+            }
+            if (cause instanceof EntityNotFoundException enfe) {
+                return handleEntityNotFound(enfe);
+            }
+            cause = cause.getCause();
+        }
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Конфликт данных, попробуйте снова"));
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
+        var cause = ex.getCause();
+        while (cause != null) {
+            if (cause instanceof BusinessException be) {
+                return handleBusinessException(be);
+            }
+            if (cause instanceof EntityNotFoundException enfe) {
+                return handleEntityNotFound(enfe);
+            }
+            cause = cause.getCause();
+        }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", extractMessage(ex)));
     }
 

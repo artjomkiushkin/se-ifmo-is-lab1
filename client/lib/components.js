@@ -33,7 +33,8 @@ var NavbarBuilder = {
         { href: 'organizations.html', label: 'Организации' },
         { href: 'persons.html', label: 'Персоны' },
         { href: 'addresses.html', label: 'Адреса' },
-        { href: 'locations.html', label: 'Локации' }
+        { href: 'locations.html', label: 'Локации' },
+        { href: 'import.html', label: 'Импорт' }
     ],
 
     render: function(containerId, activePage) {

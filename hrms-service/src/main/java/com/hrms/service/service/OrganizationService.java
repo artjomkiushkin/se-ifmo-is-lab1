@@ -7,6 +7,7 @@ import com.hrms.core.model.dto.OrganizationDTO;
 import com.hrms.core.model.entity.Address;
 import com.hrms.core.model.entity.Organization;
 import com.hrms.core.model.entity.Worker;
+import com.hrms.service.exception.EntityNotFoundException;
 import com.hrms.service.repository.AddressRepository;
 import com.hrms.service.repository.OrganizationRepository;
 import com.hrms.service.repository.WorkerRepository;
@@ -50,7 +51,7 @@ public class OrganizationService {
     public OrganizationDTO findById(Long id) {
         return organizationRepository.findById(id)
             .map(organizationMapper::toDTO)
-            .orElseThrow(() -> new RuntimeException("Организация не найдена"));
+            .orElseThrow(() -> new EntityNotFoundException("Организация не найдена"));
     }
     
     public List<OrganizationDTO> findByIds(List<Long> ids) {
@@ -79,7 +80,7 @@ public class OrganizationService {
         var addrDto = dto.getOfficialAddress();
         if (addrDto.getId() != null && addrDto.getZipCode() != null) {
             var existing = addressRepository.findById(addrDto.getId())
-                .orElseThrow(() -> new RuntimeException("Адрес не найден"));
+                .orElseThrow(() -> new EntityNotFoundException("Адрес не найден"));
             var updated = existing.withZipCode(addrDto.getZipCode());
             var saved = addressRepository.save(updated);
             notificationService.notifyAddressUpdated(addressMapper.toDTO(saved));
@@ -87,7 +88,7 @@ public class OrganizationService {
         }
         if (addrDto.getId() != null) {
             return addressRepository.findById(addrDto.getId())
-                .orElseThrow(() -> new RuntimeException("Адрес не найден"));
+                .orElseThrow(() -> new EntityNotFoundException("Адрес не найден"));
         }
         if (addrDto.getZipCode() != null) {
             var created = addressRepository.save(Address.builder().zipCode(addrDto.getZipCode()).build());
@@ -104,7 +105,7 @@ public class OrganizationService {
     @Transactional
     public List<Long> deleteWithReplacements(Long id, Map<Long, Long> workerToOrgMap) {
         var toDelete = organizationRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Организация не найдена"));
+            .orElseThrow(() -> new EntityNotFoundException("Организация не найдена"));
         List<Long> updatedWorkerIds = List.of();
         if (MapUtils.isNotEmpty(workerToOrgMap)) {
             var workers = workerRepository.findAllById(workerToOrgMap.keySet());

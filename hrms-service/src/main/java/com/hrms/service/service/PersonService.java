@@ -7,8 +7,11 @@ import com.hrms.core.model.dto.PersonDTO;
 import com.hrms.core.model.entity.Location;
 import com.hrms.core.model.entity.Person;
 import com.hrms.core.model.entity.Worker;
+import com.hrms.service.exception.EntityNotFoundException;
 import com.hrms.service.repository.LocationRepository;
+import com.hrms.service.exception.EntityNotFoundException;
 import com.hrms.service.repository.PersonRepository;
+import com.hrms.service.exception.EntityNotFoundException;
 import com.hrms.service.repository.WorkerRepository;
 import com.hrms.service.specification.PersonSpecification;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +51,7 @@ public class PersonService {
     public PersonDTO findById(Long id) {
         return personRepository.findById(id)
             .map(personMapper::toDTO)
-            .orElseThrow(() -> new RuntimeException("Персона не найдена"));
+            .orElseThrow(() -> new EntityNotFoundException("Персона не найдена"));
     }
     
     public List<PersonDTO> findByIds(List<Long> ids) {
@@ -64,7 +67,7 @@ public class PersonService {
 
     @Transactional
     public PersonDTO update(Long id, PersonDTO personDTO) {
-        personRepository.findById(id).orElseThrow(() -> new RuntimeException("Персона не найдена"));
+        personRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Персона не найдена"));
         var person = personMapper.toEntity(personDTO.withId(id));
         person.setLocation(resolveLocation(personDTO));
         return personMapper.toDTO(personRepository.save(person));
@@ -77,7 +80,7 @@ public class PersonService {
         var locDto = dto.getLocation();
         if (locDto.getId() != null) {
             var existing = locationRepository.findById(locDto.getId())
-                .orElseThrow(() -> new RuntimeException("Локация не найдена"));
+                .orElseThrow(() -> new EntityNotFoundException("Локация не найдена"));
             var updated = existing.toBuilder()
                 .x(locDto.getX())
                 .y(locDto.getY())
@@ -134,7 +137,7 @@ public class PersonService {
     @Transactional
     public List<Long> deleteWithReplacements(Long id, Map<Long, Long> workerToPersonMap) {
         var toDelete = personRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Персона не найдена"));
+            .orElseThrow(() -> new EntityNotFoundException("Персона не найдена"));
         List<Long> updatedWorkerIds = List.of();
         if (MapUtils.isNotEmpty(workerToPersonMap)) {
             var workers = workerRepository.findAllById(workerToPersonMap.keySet());

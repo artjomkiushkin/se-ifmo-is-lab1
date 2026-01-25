@@ -11,6 +11,8 @@ import com.hrms.core.model.enums.Color;
 import com.hrms.core.model.enums.Country;
 import com.hrms.core.model.enums.OrganizationType;
 import com.hrms.core.model.enums.Position;
+import com.hrms.service.exception.BusinessException;
+import com.hrms.service.exception.EntityNotFoundException;
 import com.hrms.service.repository.*;
 import com.hrms.service.specification.WorkerSpecification;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
@@ -54,7 +57,7 @@ public class WorkerService {
     public WorkerDTO findById(Long id) {
         return workerRepository.findById(id)
             .map(workerMapper::toDTO)
-            .orElseThrow(() -> new RuntimeException("Работник не найден"));
+            .orElseThrow(() -> new EntityNotFoundException("Работник не найден"));
     }
     
     public List<WorkerDTO> findByIds(List<Long> ids) {
@@ -73,11 +76,13 @@ public class WorkerService {
         return workerMapper.toDTO(workerRepository.save(worker));
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public WorkerDTO createWithNested(CreateWorkerDTO dto) {
-        // log.info("Creating worker: " + dto.getPosition());
         var endDate = StringUtils.isNotBlank(dto.getEndDate()) ? ZonedDateTime.parse(dto.getEndDate()) : null;
         validateDates(dto.getStartDate(), endDate);
+        var organization = resolveOrganization(dto);
+        var person = resolvePerson(dto);
+        validatePersonOrganizationUniqueness(person.getId(), organization.getId(), null);
         var worker = Worker.builder()
             .coordinates(Coordinates.builder().x(dto.getCoordinatesX()).y(dto.getCoordinatesY()).build())
             .salary(dto.getSalary())
@@ -85,10 +90,13 @@ public class WorkerService {
             .startDate(dto.getStartDate())
             .position(Position.valueOf(dto.getPosition()))
             .endDate(endDate)
-            .organization(resolveOrganization(dto))
-            .person(resolvePerson(dto))
+            .organization(organization)
+            .person(person)
             .build();
-        return workerMapper.toDTO(workerRepository.save(worker));
+        var saved = workerRepository.save(worker);
+        var result = workerMapper.toDTO(saved);
+        notificationService.notifyWorkerCreated(result);
+        return result;
     }
 
     private Organization resolveOrganization(CreateWorkerDTO dto) {
@@ -254,7 +262,7 @@ public class WorkerService {
     public WorkerDTO update(Long id, WorkerDTO workerDTO) {
         validateDates(workerDTO.getStartDate(), workerDTO.getEndDate());
         var existing = workerRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Работник не найден"));
+            .orElseThrow(() -> new EntityNotFoundException("Работник не найден"));
         var updated = existing.toBuilder()
             .salary(workerDTO.getSalary())
             .rating(workerDTO.getRating())
@@ -276,12 +284,15 @@ public class WorkerService {
         return workerMapper.toDTO(workerRepository.save(updated));
     }
     
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public WorkerDTO updateWithNested(Long id, CreateWorkerDTO dto) {
         var endDate = StringUtils.isNotBlank(dto.getEndDate()) ? ZonedDateTime.parse(dto.getEndDate()) : null;
         validateDates(dto.getStartDate(), endDate);
         var existing = workerRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Работник не найден"));
+            .orElseThrow(() -> new EntityNotFoundException("Работник не найден"));
+        var organization = resolveOrganization(dto);
+        var person = resolvePerson(dto);
+        validatePersonOrganizationUniqueness(person.getId(), organization.getId(), id);
         var updated = existing.toBuilder()
             .coordinates(Coordinates.builder().x(dto.getCoordinatesX()).y(dto.getCoordinatesY()).build())
             .salary(dto.getSalary())
@@ -289,15 +300,18 @@ public class WorkerService {
             .startDate(dto.getStartDate())
             .position(Position.valueOf(dto.getPosition()))
             .endDate(endDate)
-            .organization(resolveOrganization(dto))
-            .person(resolvePerson(dto))
+            .organization(organization)
+            .person(person)
             .build();
         return workerMapper.toDTO(workerRepository.save(updated));
     }
 
     @Transactional
     public void delete(Long id) {
-        workerRepository.deleteById(id);
+        var deletedCount = workerRepository.deleteWorkerById(id);
+        if (deletedCount == 0) {
+            throw new EntityNotFoundException("Работник не найден");
+        }
     }
 
     @Transactional
@@ -365,19 +379,19 @@ public class WorkerService {
     }
 
     private Organization findOrganization(Long id) {
-        return organizationRepository.findById(id).orElseThrow(() -> new RuntimeException("Организация не найдена"));
+        return organizationRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Организация не найдена"));
     }
 
     private Person findPerson(Long id) {
-        return personRepository.findById(id).orElseThrow(() -> new RuntimeException("Персона не найдена"));
+        return personRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Персона не найдена"));
     }
 
     private Location findLocation(Long id) {
-        return locationRepository.findById(id).orElseThrow(() -> new RuntimeException("Локация не найдена"));
+        return locationRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Локация не найдена"));
     }
 
     private Address findAddress(Long id) {
-        return addressRepository.findById(id).orElseThrow(() -> new RuntimeException("Адрес не найден"));
+        return addressRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Адрес не найден"));
     }
 
     private void validateDates(Date startDate, ZonedDateTime endDate) {
@@ -386,6 +400,24 @@ public class WorkerService {
         }
         if (endDate.toInstant().isBefore(startDate.toInstant())) {
             throw new IllegalArgumentException("Дата окончания не может быть раньше даты начала");
+        }
+    }
+
+    private void validatePersonOrganizationUniqueness(Long personId, Long orgId, Long excludeWorkerId) {
+        if (personId == null) {
+            return;
+        }
+        var activeWorkers = workerRepository.findActiveByPersonId(personId);
+        var conflict = activeWorkers.stream()
+            .filter(w -> excludeWorkerId == null || !w.getId().equals(excludeWorkerId))
+            .findAny();
+        if (conflict.isPresent()) {
+            var existing = conflict.get();
+            if (existing.getOrganization().getId().equals(orgId)) {
+                throw new BusinessException("Person уже работает в этой организации");
+            } else {
+                throw new BusinessException("Person уже работает в другой организации");
+            }
         }
     }
 }

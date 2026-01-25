@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HRMS - Импорт</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+</head>
+<body>
+    <div id="navbar-container"></div>
+
+    <div class="container-fluid px-4 mt-4">
+        <h2>Импорт данных</h2>
+        
+        <div class="row">
+            <div class="col-md-5">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="bi bi-upload me-2"></i>Загрузка файла
+                    </div>
+                    <div class="card-body">
+                        <form id="importForm">
+                            <div class="mb-3">
+                                <label for="importFile" class="form-label">Выберите JSON файл для импорта</label>
+                                <input type="file" class="form-control" id="importFile" accept=".json" required>
+                            </div>
+                            <div class="mb-3">
+                                <small class="text-muted">
+                                    Формат файла: <code>{"items": [...]}</code><br>
+                                    Типы: worker, organization, person, location, address
+                                </small>
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="importBtn">
+                                <i class="bi bi-cloud-upload me-1"></i>Импортировать
+                            </button>
+                        </form>
+                        
+                        <div id="importResult" class="mt-3" style="display:none;"></div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="bi bi-info-circle me-2"></i>Пример файла
+                    </div>
+                    <div class="card-body">
+                        <pre class="bg-light p-3 small" style="max-height: 300px; overflow: auto;">{
+  "items": [
+    {
+      "type": "worker",
+      "coordinatesX": 1.5,
+      "coordinatesY": 2.5,
+      "salary": 50000,
+      "rating": 4.5,
+      "startDate": "2024-01-15",
+      "position": "MANAGER",
+      "newOrganization": {
+        "fullName": "Компания",
+        "annualTurnover": 1000000,
+        "rating": 4.0,
+        "newAddress": { "zipCode": "123456" }
+      },
+      "newPerson": {
+        "name": "Иван Иванов",
+        "eyeColor": "BLUE",
+        "hairColor": "WHITE",
+        "height": 180,
+        "newLocation": { "x": 10, "y": 20.5, "z": 30 }
+      }
+    }
+  ]
+}</pre>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="downloadExample()">
+                            <i class="bi bi-download me-1"></i>Скачать пример
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-7">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-clock-history me-2"></i>История импорта</span>
+                        <button class="btn btn-sm btn-outline-primary" onclick="loadHistory()">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                    <div class="card-body p-2">
+                        <div id="historyTableContainer"></div>
+                        
+                        <nav>
+                            <ul class="pagination pagination-sm justify-content-center mb-0" id="historyPagination"></ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="viewModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewModalTitle">Детали импорта</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="viewModalBody"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" id="viewModalEditBtn" style="display:none;"></button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <script src="lib/utils.js"></script>
+    <script src="lib/components.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script src="lib/notifications.js"></script>
+    <script src="js/websocket.js"></script>
+    <script src="js/import.js"></script>
+    <script>
+        NavbarBuilder.render('navbar-container');
+        checkAuth();
+        initImport();
+    </script>
+</body>
+</html>

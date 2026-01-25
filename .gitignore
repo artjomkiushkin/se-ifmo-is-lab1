@@ -20,8 +20,11 @@ diagrams/**
 .classpath
 .project
 
+requirements/**
+jmeter/**
 
 
+*.p12
 *.docx
 *.pdf
 ~$*

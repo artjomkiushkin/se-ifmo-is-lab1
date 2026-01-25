@@ -13,5 +13,6 @@
     <include file="tables/workers/workers.sql" relativeToChangelogFile="true"/>
     <include file="init/init.sql" relativeToChangelogFile="true"/>
     <include file="migrations/007-add-end-date-check.sql" relativeToChangelogFile="true"/>
+    <include file="tables/import_operations/import_operations.sql" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

@@ -5,7 +5,9 @@ import com.hrms.core.model.dto.AddressDTO;
 import com.hrms.core.model.dto.FilterDTO;
 import com.hrms.core.model.entity.Address;
 import com.hrms.core.model.entity.Organization;
+import com.hrms.service.exception.EntityNotFoundException;
 import com.hrms.service.repository.AddressRepository;
+import com.hrms.service.exception.EntityNotFoundException;
 import com.hrms.service.repository.OrganizationRepository;
 import com.hrms.service.specification.AddressSpecification;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +44,7 @@ public class AddressService {
     public AddressDTO findById(Long id) {
         return addressRepository.findById(id)
             .map(addressMapper::toDTO)
-            .orElseThrow(() -> new RuntimeException("Адрес не найден"));
+            .orElseThrow(() -> new EntityNotFoundException("Адрес не найден"));
     }
 
     @Transactional
@@ -54,7 +56,7 @@ public class AddressService {
     @Transactional
     public AddressDTO update(Long id, AddressDTO addressDTO) {
         var existing = addressRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Адрес не найден"));
+            .orElseThrow(() -> new EntityNotFoundException("Адрес не найден"));
         var updated = existing.withZipCode(addressDTO.getZipCode());
         return addressMapper.toDTO(addressRepository.save(updated));
     }
@@ -66,7 +68,7 @@ public class AddressService {
     @Transactional
     public List<Long> deleteWithReplacements(Long id, Map<Long, Long> orgToAddressMap) {
         var toDelete = addressRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Адрес не найден"));
+            .orElseThrow(() -> new EntityNotFoundException("Адрес не найден"));
         List<Long> updatedOrgIds = List.of();
         if (MapUtils.isNotEmpty(orgToAddressMap)) {
             var orgs = organizationRepository.findAllById(orgToAddressMap.keySet());
@@ -91,14 +93,14 @@ public class AddressService {
     @Transactional
     public void delete(Long id, Long replacementId) {
         var toDelete = addressRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Адрес не найден"));
+            .orElseThrow(() -> new EntityNotFoundException("Адрес не найден"));
         var relatedOrgIds = organizationRepository.findIdsByOfficialAddressId(id);
         if (!relatedOrgIds.isEmpty()) {
             if (replacementId == null) {
                 throw new RuntimeException("Адрес используется в " + relatedOrgIds.size() + " организациях. Укажите замену.");
             }
             var replacement = addressRepository.findById(replacementId)
-                .orElseThrow(() -> new RuntimeException("Адрес для замены не найден"));
+                .orElseThrow(() -> new EntityNotFoundException("Адрес для замены не найден"));
             var orgs = organizationRepository.findAllById(relatedOrgIds);
             var updated = StreamEx.of(orgs).map(o -> o.withOfficialAddress(replacement)).toList();
             organizationRepository.saveAll(updated);
